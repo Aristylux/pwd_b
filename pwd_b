@@ -1,0 +1,95 @@
+#!/bin/bash
+
+#determine if pwd is / (root) or ~ (home)
+function CheckSlash () {
+	case "$PWD" in 
+		"$HOME"*)
+			return 1
+			;;
+		"/"*)
+			return 2
+			;;
+	esac
+}
+
+function CheckFirstDir ()  {
+    FirstDirectory=${ArrayDirectory[0]}
+    if [ "$FirstDirectory" = "" ]
+    then
+        Way=""
+    else
+        #Way="/$FirstDirectory"
+        Way="$FirstDirectory"
+    fi
+}
+
+function CheckDirectory () {
+
+    echod "-> $DirectoryName"
+    if [ "${#DirectoryName}" -ge 12 ]
+    then
+        DirectoryNameFormated="${DirectoryName:0:4}."
+    elif [ "${#DirectoryName}" -ge 6 ]
+    then
+        DirectoryNameFormated="${DirectoryName:0:3}."
+    else
+        DirectoryNameFormated="${DirectoryName}"
+    fi
+}
+
+function echod () {
+    if [ "$Debug" = "true" ]
+    then
+        echo "$*"
+    fi
+}
+
+#-------- Main program ----------
+Debug="false"
+
+Slash=""
+AbsolutePath=""
+Way=""
+DirectoriesList=""
+ArrayDirectory=""
+DirectoryNameFormated=""
+
+if [ "$1" = "-d" ]
+then
+    Debug="true"
+fi
+
+CheckSlash
+
+if [ $? -eq 1 ]
+then
+	Slash="~/"
+	AbsolutePath="${PWD:${#HOME}+1}/" #delete 'home/$USER/'
+else	#equal 2
+	Slash="/"
+ 	AbsolutePath="$PWD/"
+fi
+echod "$AbsolutePath"
+
+#creation du chemin a afficher
+DirectoriesList=$(tr '/' '\n' <<< "$AbsolutePath")
+echod "$DirectoriesList"
+
+
+OldIFS=$IFS
+IFS=$'\n'
+
+ArrayDirectory=($DirectoriesList)
+echod "${ArrayDirectory[@]}"
+
+CheckFirstDir
+
+for DirectoryName in "${ArrayDirectory[@]:1}"
+do
+    CheckDirectory 
+    Way+="/$DirectoryNameFormated"
+done
+
+IFS=$OldIFS
+
+echo "$Slash$Way"
