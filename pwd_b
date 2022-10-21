@@ -14,12 +14,17 @@ function CheckSlash () {
 
 function CheckFirstDir ()  {
     FirstDirectory=${ArrayDirectory[0]}
+    echod "First dir : $FirstDirectory"
     if [ "$FirstDirectory" = "" ]
     then
         Way=""
     else
-        #Way="/$FirstDirectory"
-        Way="$FirstDirectory"
+        if [ "$Slash" = "/" ]
+        then
+            Way="$FirstDirectory"
+        else
+            Way="/$FirstDirectory"
+        fi        
     fi
 }
 
@@ -63,7 +68,7 @@ CheckSlash
 
 if [ $? -eq 1 ]
 then
-	Slash="~/"
+	Slash="~"
 	AbsolutePath="${PWD:${#HOME}+1}/" #delete 'home/$USER/'
 else	#equal 2
 	Slash="/"
