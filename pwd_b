@@ -28,8 +28,7 @@ function CheckFirstDir ()  {
     fi
 }
 
-function CheckDirectory () {
-
+function CheckDirectoryLengh () {
     echod "-> $DirectoryName"
     if [ "${#DirectoryName}" -ge 12 ]
     then
@@ -91,7 +90,7 @@ CheckFirstDir
 
 for DirectoryName in "${ArrayDirectory[@]:1}"
 do
-    CheckDirectory 
+    CheckDirectoryLengh 
     Way+="/$DirectoryNameFormated"
 done
 
