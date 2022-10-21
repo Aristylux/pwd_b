@@ -28,16 +28,22 @@ function CheckFirstDir ()  {
     fi
 }
 
-function CheckDirectoryLengh () {
+function CheckDirectory () {
     echod "-> $DirectoryName"
-    if [ "${#DirectoryName}" -ge 12 ]
+    DirectoryNameCompress=$(tr -d ' ' <<< "$DirectoryName")
+    echod "C-> $DirectoryNameCompress"
+}
+
+function CheckDirectoryLengh () {
+    echod "-> $DirectoryNameCompress"
+    if [ "${#DirectoryNameCompress}" -ge 12 ]
     then
-        DirectoryNameFormated="${DirectoryName:0:4}."
-    elif [ "${#DirectoryName}" -ge 6 ]
+        DirectoryNameFormated="${DirectoryNameCompress:0:4}."
+    elif [ "${#DirectoryNameCompress}" -ge 6 ]
     then
-        DirectoryNameFormated="${DirectoryName:0:3}."
+        DirectoryNameFormated="${DirectoryNameCompress:0:3}."
     else
-        DirectoryNameFormated="${DirectoryName}"
+        DirectoryNameFormated="${DirectoryNameCompress}"
     fi
 }
 
@@ -56,6 +62,7 @@ AbsolutePath=""
 Way=""
 DirectoriesList=""
 ArrayDirectory=""
+DirectoryNameCompress=""
 DirectoryNameFormated=""
 
 if [ "$1" = "-d" ]
@@ -79,7 +86,6 @@ echod "$AbsolutePath"
 DirectoriesList=$(tr '/' '\n' <<< "$AbsolutePath")
 echod "$DirectoriesList"
 
-
 OldIFS=$IFS
 IFS=$'\n'
 
@@ -90,6 +96,7 @@ CheckFirstDir
 
 for DirectoryName in "${ArrayDirectory[@]:1}"
 do
+    CheckDirectory
     CheckDirectoryLengh 
     Way+="/$DirectoryNameFormated"
 done
