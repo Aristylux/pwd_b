@@ -1,7 +1,49 @@
 #!/bin/bash
 
-#determine if pwd is / (root) or ~ (home)
-checkSlash () {
+
+
+# -------------------------------------------------------
+
+# print_help:
+# Print usage for pwd_b
+print_help () {
+	echo "Usage : pwd [option]"
+    echo "  example:   pwd -d "
+    echo "  example:   pwd -h"
+    echo "\n\t-d\tdebug mode"
+    echo "\t-h\tdisplay this help and exit"
+	exit 0
+}
+
+# check_arguments:
+# Check argument in parameter
+# -h for print help
+# -d to enable debug
+check_arguments () {
+	case $1 in
+		--help|-h)
+			print_help
+			;;
+		-d)
+			Debug="true"
+			;;
+	esac
+}
+
+# echod:
+# Enable echo for debug
+echod () {
+    if [ "$Debug" = "true" ]
+    then
+        echo "$*"
+    fi
+}
+
+# -------------------------------------------------------
+
+# check_main_directory:
+# determine if the main directory is / (root) or ~ (home)
+check_main_directory () {
 	case "$PWD" in 
 		"$HOME"*)
 			return 1
@@ -32,7 +74,7 @@ checkFirstDir ()  {
 # 1st pass of compression
 # take the first word after space ' '
 checkDirectory () {
-    echod "-> '$DirectoryName'"
+    echod "->             '$DirectoryName'"
     CompressDirectoryName=$(tr -d ' ' <<< "$DirectoryName")
     echod "-> compressed: '$CompressDirectoryName'"
 }
@@ -50,12 +92,7 @@ formatDirectoryName () {
     fi
 }
 
-echod () {
-    if [ "$Debug" = "true" ]
-    then
-        echo "$*"
-    fi
-}
+
 
 #-------- Main program ----------
 Debug="false"
@@ -68,12 +105,13 @@ ArrayDirectory=""
 CompressDirectoryName=""
 DirectoryNameFormated=""
 
-if [ "$1" = "-d" ]
-then
-    Debug="true"
-fi
+check_arguments "$1"
 
-checkSlash
+## ------------ ##
+## Main Program ##
+## ------------ ##
+
+check_main_directory
 
 if [ $? -eq 1 ]
 then
@@ -83,7 +121,7 @@ else	#equal 2
 	Slash="/"
  	AbsolutePath="$PWD/"
 fi
-echod "$AbsolutePath"
+echod "Absolute path: $AbsolutePath"
 
 #creation du chemin a afficher
 DirectoriesList=$(tr '/' '\n' <<< "$AbsolutePath")
