@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #determine if pwd is / (root) or ~ (home)
-function CheckSlash () {
+checkSlash () {
 	case "$PWD" in 
 		"$HOME"*)
 			return 1
@@ -12,7 +12,7 @@ function CheckSlash () {
 	esac
 }
 
-function CheckFirstDir ()  {
+checkFirstDir ()  {
     FirstDirectory=${ArrayDirectory[0]}
     echod "First dir : $FirstDirectory"
     if [ "$FirstDirectory" = "" ]
@@ -28,26 +28,29 @@ function CheckFirstDir ()  {
     fi
 }
 
-function CheckDirectory () {
-    echod "-> $DirectoryName"
-    DirectoryNameCompress=$(tr -d ' ' <<< "$DirectoryName")
-    echod "C-> $DirectoryNameCompress"
+# checkDirectory:
+# 1st pass of compression
+# take the first word after space ' '
+checkDirectory () {
+    echod "-> '$DirectoryName'"
+    CompressDirectoryName=$(tr -d ' ' <<< "$DirectoryName")
+    echod "-> compressed: '$CompressDirectoryName'"
 }
 
-function CheckDirectoryLengh () {
-    echod "-> $DirectoryNameCompress"
-    if [ "${#DirectoryNameCompress}" -ge 12 ]
+formatDirectoryName () {
+    echod "-> $CompressDirectoryName"
+    if [ "${#CompressDirectoryName}" -ge 12 ]
     then
-        DirectoryNameFormated="${DirectoryNameCompress:0:4}."
-    elif [ "${#DirectoryNameCompress}" -ge 6 ]
+        DirectoryNameFormated="${CompressDirectoryName:0:4}."
+    elif [ "${#CompressDirectoryName}" -ge 6 ]
     then
-        DirectoryNameFormated="${DirectoryNameCompress:0:3}."
+        DirectoryNameFormated="${CompressDirectoryName:0:3}."
     else
-        DirectoryNameFormated="${DirectoryNameCompress}"
+        DirectoryNameFormated="${CompressDirectoryName}"
     fi
 }
 
-function echod () {
+echod () {
     if [ "$Debug" = "true" ]
     then
         echo "$*"
@@ -62,7 +65,7 @@ AbsolutePath=""
 Way=""
 DirectoriesList=""
 ArrayDirectory=""
-DirectoryNameCompress=""
+CompressDirectoryName=""
 DirectoryNameFormated=""
 
 if [ "$1" = "-d" ]
@@ -70,7 +73,7 @@ then
     Debug="true"
 fi
 
-CheckSlash
+checkSlash
 
 if [ $? -eq 1 ]
 then
@@ -92,12 +95,12 @@ IFS=$'\n'
 ArrayDirectory=($DirectoriesList)
 echod "${ArrayDirectory[@]}"
 
-CheckFirstDir
+checkFirstDir
 
 for DirectoryName in "${ArrayDirectory[@]:1}"
 do
-    CheckDirectory
-    CheckDirectoryLengh 
+    checkDirectory
+    formatDirectoryName 
     Way+="/$DirectoryNameFormated"
 done
 
