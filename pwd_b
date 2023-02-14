@@ -1,6 +1,7 @@
 #!/bin/sh
 
 Debug="false"
+Icons="false"
 
 Slash=""
 AbsolutePath=""
@@ -14,7 +15,9 @@ print_help () {
 	echo "Usage : pwd [option]"
     echo "  example:   pwd -d "
     echo "  example:   pwd -h"
-    echo "\n\t-d\tdebug mode"
+    echo "\n"
+    echo "\t-d\tdebug mode"
+    echo "\t-i\use icons"
     echo "\t-h\tdisplay this help and exit"
 	exit 0
 }
@@ -31,6 +34,9 @@ check_arguments () {
 		-d)
 			Debug="true"
 			;;
+        -i)
+            Icons="true"
+            ;;
 	esac
 }
 
@@ -69,7 +75,12 @@ checkFirstDir () {
         then
             Way="$FirstDirectory"
         else
-            Way="/$FirstDirectory"
+            if [ "$Icons" = "true" ]
+            then
+                Way="/"$(icon "$FirstDirectory")
+            else
+                Way="/$FirstDirectory"
+            fi
         fi        
     fi
     echo "$Way"
@@ -101,7 +112,31 @@ formatDirectoryName () {
     echo "$DirectoryNameFormated"
 }
 
-
+icon () {
+    dirName="$1"
+    echod "'$dirName'"
+    case "$dirName" in
+        "Documents")
+            printf '📄'
+            ;;
+        "Downloads")
+            printf '📥'
+            ;;
+        "Desktop")
+            printf '💻'
+            ;;
+        "Pictures")
+            printf '🖼  '
+            ;;
+        "Music")
+            printf '🎵'
+            ;;
+        "Videos")
+            printf '🎥'
+            ;;
+    esac
+    
+}
 
 #-------- Main program ----------
 
@@ -118,7 +153,14 @@ if [ $? -eq 1 ]
 then
 	Slash="~"
     userHome=$(eval echo ~$USER) # user home
-    AbsolutePath=$(echo "$PWD" | sed "s|^$userHome/||") # remove /home/$USER/
+    echod $userHome
+    AbsolutePath=$(echo "$PWD" | sed "s|^$userHome||") # remove /home/$USER/
+
+    if ! [ "$AbsolutePath" = "" ]
+    then
+        AbsolutePath="$(echo $AbsolutePath | cut -c 2-)"
+    fi
+
 else	#equal 2
 	Slash="/"
  	AbsolutePath="$PWD/"
