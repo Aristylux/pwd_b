@@ -1,6 +1,10 @@
-#!/bin/bash
+#!/bin/sh
 
+Debug="false"
 
+Slash=""
+AbsolutePath=""
+Way=""
 
 # -------------------------------------------------------
 
@@ -54,9 +58,9 @@ check_main_directory () {
 	esac
 }
 
-checkFirstDir ()  {
-    FirstDirectory=${ArrayDirectory[0]}
-    echod "First dir : $FirstDirectory"
+checkFirstDir () {
+    FirstDirectory="$1"
+    #echod "First dir : $FirstDirectory"
     if [ "$FirstDirectory" = "" ]
     then
         Way=""
@@ -68,42 +72,39 @@ checkFirstDir ()  {
             Way="/$FirstDirectory"
         fi        
     fi
+    echo "$Way"
 }
 
 # checkDirectory:
 # 1st pass of compression
-# take the first word after space ' '
+# delete all spaces (' ')
 checkDirectory () {
-    echod "->             '$DirectoryName'"
-    CompressDirectoryName=$(tr -d ' ' <<< "$DirectoryName")
-    echod "-> compressed: '$CompressDirectoryName'"
+    dirName="$1"
+    #echod "->             '$dirName'"
+    CompressDirectoryName=$(echo "$dirName" | tr -d ' ')
+    #echod "-> compressed: '$CompressDirectoryName'"
+    echo "$CompressDirectoryName"
 }
 
 formatDirectoryName () {
-    echod "-> $CompressDirectoryName"
-    if [ "${#CompressDirectoryName}" -ge 12 ]
+    dirName="$1"
+    #echod "-> $dirName"
+    if [ "${#dirName}" -ge 12 ]
     then
-        DirectoryNameFormated="${CompressDirectoryName:0:4}."
-    elif [ "${#CompressDirectoryName}" -ge 6 ]
+        DirectoryNameFormated=$(echo "$dirName" | cut -c 1-4).
+    elif [ "${#dirName}" -ge 6 ]
     then
-        DirectoryNameFormated="${CompressDirectoryName:0:3}."
+        DirectoryNameFormated=$(echo "$dirName" | cut -c 1-3).
     else
-        DirectoryNameFormated="${CompressDirectoryName}"
+        DirectoryNameFormated="${dirName}"
     fi
+    echo "$DirectoryNameFormated"
 }
 
 
 
 #-------- Main program ----------
-Debug="false"
 
-Slash=""
-AbsolutePath=""
-Way=""
-DirectoriesList=""
-ArrayDirectory=""
-CompressDirectoryName=""
-DirectoryNameFormated=""
 
 check_arguments "$1"
 
@@ -116,30 +117,34 @@ check_main_directory
 if [ $? -eq 1 ]
 then
 	Slash="~"
-	AbsolutePath="${PWD:${#HOME}+1}/" #delete 'home/$USER/'
+    userHome=$(eval echo ~$USER) # user home
+    AbsolutePath=$(echo "$PWD" | sed "s|^$userHome/||") # remove /home/$USER/
 else	#equal 2
 	Slash="/"
  	AbsolutePath="$PWD/"
 fi
 echod "Absolute path: $AbsolutePath"
 
-#creation du chemin a afficher
-DirectoriesList=$(tr '/' '\n' <<< "$AbsolutePath")
-echod "$DirectoriesList"
-
 OldIFS=$IFS
-IFS=$'\n'
 
-ArrayDirectory=($DirectoriesList)
-echod "${ArrayDirectory[@]}"
+number=0
 
-checkFirstDir
+IFS="/" # set the input field separator to "/"
 
-for DirectoryName in "${ArrayDirectory[@]:1}"
+# For each folder names
+for DirectoryName in $AbsolutePath
 do
-    checkDirectory
-    formatDirectoryName 
-    Way+="/$DirectoryNameFormated"
+    # Check the first directory
+    if [ $number -eq 0 ]
+    then
+        Way=$(checkFirstDir "$DirectoryName")
+    else
+        dir=$(checkDirectory "$DirectoryName")
+        formattedDir=$(formatDirectoryName "$dir")
+        Way="$Way/$formattedDir"
+        echod " . $DirectoryName - $formattedDir"
+    fi
+    number=$((number + 1))
 done
 
 IFS=$OldIFS
