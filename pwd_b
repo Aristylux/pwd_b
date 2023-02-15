@@ -134,6 +134,9 @@ icon () {
         "Videos")
             printf '🎥'
             ;;
+        *)
+            printf "$dirName"
+            ;;
     esac
     
 }
