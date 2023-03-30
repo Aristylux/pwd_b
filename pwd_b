@@ -12,13 +12,12 @@ Way=""
 # print_help:
 # Print usage for pwd_b
 print_help () {
-	echo "Usage : pwd [option]"
-    echo "  example:   pwd -d "
-    echo "  example:   pwd -h"
-    echo "\n"
-    echo "\t-d\tdebug mode"
-    echo "\t-i\use icons"
-    echo "\t-h\tdisplay this help and exit"
+	echo "Usage : pwd [OPTION]"
+    echo "  example:   pwd -d"
+    echo "  example:   pwd -h\n"
+    echo "\t-d              debug mode"
+    echo "\t-i              use icons"
+    echo "\t-h, --help      display this help and exit"
 	exit 0
 }
 
@@ -137,8 +136,7 @@ icon () {
         *)
             printf "$dirName"
             ;;
-    esac
-    
+    esac   
 }
 
 #-------- Main program ----------
@@ -165,7 +163,7 @@ then
     fi
 
 else	#equal 2
-	Slash="/"
+	#Slash="/"
  	AbsolutePath="$PWD/"
 fi
 echod "Absolute path: $AbsolutePath"
