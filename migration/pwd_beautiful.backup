@@ -1,0 +1,240 @@
+#!/bin/bash
+
+
+detect_word (){
+	declare -a TableWord
+	NameFile=$2
+	#printf "detect : $NameFile\n"
+	#remplace les characteres par un espace
+	DelChar=$(tr '_\-\,' ' ' <<<"$NameFile")
+	
+	NbrWord=$(echo $DelChar | wc -w)
+	#printf "nbr : $NbrWord\n"
+	
+	#mets les mots dans un tableau
+	for ((i=1; i<=NbrWord; i++)); do
+        word=$(echo $DelChar | cut -d" " -f$i)
+        #printf "$word\n"
+        TableWord[$i]="$word"
+	done
+	
+	#ShowArray "${TableWord[*]}"
+	
+	
+	
+	#detect_vow -f ${TableWord[1]}
+	#local D_Debut=$WCOMPRESS
+	#detect_vow -l ${TableWord[${#TableWord[@]}]}
+	#local D_Fin=$WCOMPRESS
+	#D_Debut=${TableWord[1]}
+	#D_Fin=${TableWord[${#TableWord[@]}]}
+	
+	
+	case $1 in
+		"-vl")
+		#printf "vl\n"
+		detect_vow -f ${TableWord[1]}
+		local D_Debut=$WCOMPRESS
+		detect_vow -l ${TableWord[${#TableWord[@]}]}
+		local D_Fin=$WCOMPRESS
+		DIRECT="$D_Debut..$D_Fin";;
+		#printf "Final Name : $DIRECT\n";;
+		"-l")
+		detect_vow -f ${TableWord[1]}
+		local D_Debut=$WCOMPRESS
+		DIRECT="$D_Debut.";;
+		#printf "Final Name : $DIRECT\n"
+		#printf "l\n";;
+		*)
+		printf "nope";;
+	esac
+	#printf "Final Name : $DIRECT\n"
+}
+
+#lecture d'un tableau
+# argument Tableau (on ne peut pas)
+ShowArray (){
+	Tab=$1
+	LengthTab=$(echo $Tab | wc -w)
+	printf "Taille du tableau : $LengthTab\n"
+	for ((i=1; i<=LengthTab; i++)); do
+		printf "Val $i : $(echo $Tab | cut -d" " -f$i)\n"
+	done
+}
+
+detect_vow (){
+	vowel=[aeiouy]
+	local word=""
+	local compress=""
+	first=1
+	last_=1
+	case $1 in
+		"-f")
+		first_vow $2;;
+		"-l")
+		last_vow $2;;
+		"--help")
+		help_vow;;
+		*)
+		printf "detect_vow: invalid option -- '$1'\nTry 'detect_vow --help' for more information.\n";;
+	esac
+	#printf "compress word : $WCOMPRESS\n"
+}
+
+first_vow (){
+	#printf "first vowel\n"
+	local length=${#1}
+	#printf "word length : $length\n"
+	for ((i=0; i<=length; i++)); do
+		char="${1:$i:1}"
+		nextchar="${1:$i+1:1}"
+		word+="$char"
+		#printf "$Char"
+		if [[ "$char" =~ $vowel && $first -eq 1 ]]; then #char est la premiere voyelle
+			#printf "mot : $mot\n"
+			if ! [[ "$nextchar" =~ $vowel ]]; then
+				#printf "$mot$CharSuivant\n"	
+				WCOMPRESS="$word$nextchar"
+				first=0
+			fi
+		fi
+	done
+}
+
+last_vow (){
+	#printf "last vowel\n"
+	local length=${#1}
+	#printf "word length : $length\n$1\n"
+	word=""
+	nvow=0
+	for ((i=0; i<=length; i++)); do
+		char="${1:$i:1}"
+		nextchar="${1:$i+1:1}"
+		lastchar="${1:$i-1:1}"
+		word+="$char"
+		#printf "$i : $char\n"
+		#printf "$last_"
+		if [[ "$char" =~ $vowel ]]; then #char est une voyelle
+			#printf "$char is a vowel\n"
+			#printf "mot : $word\n"
+			((nvow++))
+			if ! [[ "$nextchar" =~ $vowel ]]; then
+				new="$lastchar$char"
+				word=""
+			fi
+		fi
+	done
+	#printf "there are $nvow vowel"
+	WCOMPRESS="$new$word"
+}
+
+help_vow (){
+	printf "help\n"
+}
+
+#determine le debut du chemin si il doit commencer par ~ ou /
+if [[ "$PWD" == *"$HOME"* ]]; then
+	CHEMINDEBUT="~"
+	CHEMINBRUT="${PWD:${#HOME}+1}/"	#supprime home/$USER/ de la chaine
+elif [[ "$PWD" == "/"* ]]; then
+ 	CHEMINDEBUT="/"
+ 	CHEMINBRUT="$PWD/"
+fi
+
+#------------------
+FDIRT=""
+
+#creation du chemin a afficher
+#printf ".....................\n$CHEMINBRUT\n"
+n=$(tr '/' ' ' <<<"$CHEMINBRUT")
+#printf "$n\n"
+
+NbrFolder=$(echo $n | wc -w)
+
+#mets les dossier dans un tableau
+for ((i=1; i<=NbrFolder; i++)); do
+    folder=$(echo $n | cut -d" " -f$i)
+    ArrayFolder[$i]="$folder"
+done
+#printf ".....................\n"
+#ShowArray "${ArrayFolder[*]}"
+#printf ".....................\n"
+for ((a=1; a<=NbrFolder; a++)); do
+	#printf "$a : $NbrFolder\n"
+	if [ "${#ArrayFolder[$a]}" -ge 12 ]; then
+    	detect_word -vl "${ArrayFolder[$a]}"
+    elif [ "${#ArrayFolder[$a]}" -ge 6 ]; then
+		detect_word -l "${ArrayFolder[$a]}"
+	else
+		#printf "c"
+		DIRECT="${ArrayFolder[$a]}"
+	fi
+	#printf "$a : chemin $DIRECT\n"
+	FDIRT+="$DIRECT/"
+done
+FFDIRT="${FDIRT%/*}"	#delete /
+#printf "Directory final : $FFDIRT\n"
+
+#si premier folder alors ne le compresser que apres
+#si la prochaine lettre apres une voyelle est une consone alors on la garde :
+#desktop -> desk a la place de des
+#document -> doc
+#downlaod -> down
+#------------------
+
+#initalise
+CHEMIN=""
+MOT=""
+FRISTDIR=1
+#printf "pwd  :$PWD \ndebu :$CHEMINDEBUT\nbrut :$CHEMINBRUT\n"
+for ((i=0; i<=${#CHEMINBRUT};i++)); do
+	MOT+="${CHEMINBRUT:$i:1}"
+	#printf "$i : $MOT\n"
+	if [ "${CHEMINBRUT:$i:1}" = "/" ]; then		#si on trouve / on check le directory
+		WORD="${MOT%/*}"	#delete /
+		#printf "mot : $MOT\nsword : $WORD\ntword : ${#WORD}\n"
+		#defini si on doit recourssir ou pas
+		if [ "${#WORD}" -ge 12 ]; then
+			LONG=2		#very long
+		elif [ "${#WORD}" -ge 6 ]; then
+			LONG=1
+		else
+			LONG=0
+		fi
+		#printf "$LONG\n"
+		#fonction de raccourcissement du nom du dossier
+		if [ "$FRISTDIR" -ne 1 ]; then		#affiche le premier dossier en entier
+			if [ "$LONG" -eq 1 ]; then		#si le nom du dossier est un peu trop long
+				DIRECTORY="${WORD:0:3}.."	#on recourci legerement
+			elif [ "$LONG" -eq 2 ]; then	#si vraiment trop long
+				DIRECTORY="${WORD:0:3}..${WORD:${#WORD}-9:9}"
+			else
+				DIRECTORY="$WORD"			#si il est petit on ne fait rien
+			fi
+		else
+			DIRECTORY="$WORD"
+		fi
+		#printf "nom du dossier : ${blue}$DIRECTORY${reset}\nchemin : $CHEMIN\ntaill : ${#DIRECTORY}\n"
+		#detect_word $DIRECTORY
+		
+		
+		#mise en forme du chemin d'acces
+		if [[ "$DIRECTORY" != "" ]]; then				#lorsque le nom du dossier n'est pas vide
+			if [ "$FRISTDIR" -eq 1 ]; then				
+				if [[ "$CHEMINDEBUT" == "~" ]]; then	#si on est dans le home on a '~' sinon rien
+					CHEMIN+="/$DIRECTORY"
+				else
+					CHEMIN+="$DIRECTORY"
+				fi
+				FRISTDIR=0
+			else
+				CHEMIN+="/$DIRECTORY"
+			fi
+		fi
+		MOT=""
+		#amelioration : faire un sorte que le premier dossier et le dernier ne soit pas compressé
+		#detection des mots (majuscules, _, etc)
+	fi
+done
+#printf "chemin final : $CHEMIN\n"
+echo "$CHEMINDEBUT$CHEMIN"
